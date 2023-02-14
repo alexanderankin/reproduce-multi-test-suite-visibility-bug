@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-class ExampleControllerTest {
+class ExampleControllerTest extends BaseTest {
     ExampleController exampleController;
 
     @BeforeEach
@@ -16,7 +16,7 @@ class ExampleControllerTest {
 
     @Test
     void test() {
-        assertThat(exampleController.hello().block(), is("world"));
+        assertThat(exampleController.hello().block(), is(utilityFunction()));
     }
 
 }
