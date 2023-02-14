@@ -1,3 +1,5 @@
+import org.gradle.api.plugins.jvm.JvmTestSuite
+
 plugins {
     id 'java'
     id 'application'
@@ -79,6 +81,8 @@ if (useOldWay) {
                 useJUnitJupiter()
                 // targets { all { testTask.configure { tasks.check.dependsOn it } } }
                 sources {
+                    // Q: this is just a sourceSet object, why am i doing it differently here?
+                    // A: https://docs.gradle.org/7.6/userguide/jvm_test_suite_plugin.html#configure_source_directories_of_a_test_suite
                     java {
                         srcDirs += 'src/integrationTest/java'
                         srcDirs += 'src/test/java'
@@ -96,6 +100,23 @@ if (useOldWay) {
                         srcDirs += 'src/test/java'
                         srcDirs += 'src/main/java'
                     }
+                }
+            }
+        }
+    }
+}
+
+if (false) {
+    // attempt to be more typesafe with JvmTestSuite:
+    testing.with {
+        it.suites.create('someOtherTest', JvmTestSuite) {
+            it.sources {
+                it.compileClasspath += sourceSets.main.output + sourceSets.test.output
+                it.runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+            }
+
+            it.targets.configureEach {
+                it.getTestTask().configure {
                 }
             }
         }
