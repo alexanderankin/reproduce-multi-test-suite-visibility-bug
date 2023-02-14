@@ -24,4 +24,44 @@ dependencies {
     testImplementation('org.springframework.boot:spring-boot-starter-test')
 }
 
-tasks.withType(Test).configureEach { useJUnitPlatform() }
+tasks.named('test', Test).configure { useJUnitPlatform() }
+
+boolean useOldWay = false
+
+if (useOldWay) {
+    sourceSets {
+        integrationTest {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+        }
+    }
+
+    tasks.register('integrationTest', Test) {
+        useJUnitPlatform()
+        testClassesDirs = sourceSets.integrationTest.output.classesDirs
+        classpath = sourceSets.integrationTest.runtimeClasspath
+    }
+} else {
+    testing {
+        suites {
+            integrationTest(JvmTestSuite) {
+                useJUnitJupiter()
+                // targets { all { testTask.configure { tasks.check.dependsOn it } } }
+                sources {
+                    java {
+                        srcDirs += 'src/integrationTest/java'
+                        srcDirs += 'src/main/java'
+                    }
+                }
+            }
+        }
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom(testImplementation)
+}
+
+// side-note configuration avoidance does not work here
+// (integration tests are not configured to run with "check" lifecycle task)
+tasks.withType(Test) { tasks.check.dependsOn it }
