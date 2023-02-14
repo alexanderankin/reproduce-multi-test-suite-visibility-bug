@@ -26,13 +26,28 @@ dependencies {
 
 tasks.named('test', Test).configure { useJUnitPlatform() }
 
-boolean useOldWay = false
+boolean useOldWay = true
 
 if (useOldWay) {
+    // works fine! couldn't reproduce the original issue:
+    /*
+        original issue
+
+        I couldn't extend BaseIntegrationTest from BaseAcceptanceTest
+        IntelliJ wouldn't recognize the fact that the class is there.
+        Gradle would only compile the acceptanceTest module if it referenced
+        classes from integrationTest that were in other packages
+        (besides ${BaseAcceptance.class.getPackageName()}).
+     */
     sourceSets {
         integrationTest {
             compileClasspath += main.output + test.output
             runtimeClasspath += main.output + test.output
+        }
+        acceptanceTest {
+            // this is where i thought it was causing the issue
+            compileClasspath += main.output + test.output + integrationTest.output
+            runtimeClasspath += main.output + test.output + integrationTest.output
         }
     }
 
@@ -41,7 +56,23 @@ if (useOldWay) {
         testClassesDirs = sourceSets.integrationTest.output.classesDirs
         classpath = sourceSets.integrationTest.runtimeClasspath
     }
+
+    tasks.register('acceptanceTest', Test) {
+        useJUnitPlatform()
+        testClassesDirs = sourceSets.acceptanceTest.output.classesDirs
+        classpath = sourceSets.acceptanceTest.runtimeClasspath
+    }
 } else {
+    /*
+        Intellij Notification:
+
+        Duplicate content roots detected
+
+        Path [./src/integrationTest/java]
+            of module [reproduce-multi-test-suite-visibility-bug.acceptanceTest]
+            was removed from modules [reproduce-multi-test-suite-visibility-bug.integrationTest]
+     */
+    // result: test runs thrice, itest twice, acceptance once
     testing {
         suites {
             integrationTest(JvmTestSuite) {
@@ -55,12 +86,25 @@ if (useOldWay) {
                     }
                 }
             }
+            acceptanceTest(JvmTestSuite) {
+                useJUnitJupiter()
+                // targets { all { testTask.configure { tasks.check.dependsOn it } } }
+                sources {
+                    java {
+                        srcDirs += 'src/acceptanceTest/java'
+                        srcDirs += 'src/integrationTest/java'
+                        srcDirs += 'src/test/java'
+                        srcDirs += 'src/main/java'
+                    }
+                }
+            }
         }
     }
 }
 
 configurations {
     integrationTestImplementation.extendsFrom(testImplementation)
+    acceptanceTestImplementation.extendsFrom(integrationTestImplementation)
 }
 
 // side-note configuration avoidance does not work here
