@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'jvm-test-suite'
+    id 'jacoco'
+    id 'idea'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation(platform('org.springframework.boot:spring-boot-dependencies:3.0.2'))
+    annotationProcessor(platform('org.springframework.boot:spring-boot-dependencies:3.0.2'))
+
+    annotationProcessor('org.projectlombok:lombok')
+    compileOnly('org.projectlombok:lombok')
+    annotationProcessor('org.springframework.boot:spring-boot-configuration-processor')
+
+    implementation('org.springframework.boot:spring-boot-starter-webflux')
+
+    testImplementation('org.hamcrest:hamcrest:2.2')
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
+}
+
+tasks.withType(Test).configureEach { useJUnitPlatform() }
